@@ -7,10 +7,20 @@ import { useEffect } from "react";
 interface OrderModalProps {
   visible: boolean;
   order: Order | null;
+  onCancelOrder: () => Promise<void>;
   onClose: () => void;
+  isLoading: boolean;
+  onChangeOrderStatus: () => void
 }
 
-export function OrderModal({ visible, order, onClose }: OrderModalProps) {
+export function OrderModal({
+  visible,
+  order,
+  onClose,
+  onCancelOrder,
+  isLoading,
+  onChangeOrderStatus,
+}: OrderModalProps) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -22,14 +32,14 @@ export function OrderModal({ visible, order, onClose }: OrderModalProps) {
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [onClose])
+    };
+  }, [onClose]);
 
   if (!visible || !order) return null;
 
   const total = order.products.reduce((total, { product, quantity }) => {
-    return total += product.price * quantity
-  }, 0)
+    return (total += product.price * quantity);
+  }, 0);
 
   return (
     <Overlay>
@@ -46,16 +56,15 @@ export function OrderModal({ visible, order, onClose }: OrderModalProps) {
           <small>Status do Pedido</small>
           <div>
             <span>
-              {order.status === 'WAITING' && '🕑'}
-              {order.status === 'IN_PRODUCTION' && '👨‍🍳'}
-              {order.status === 'DONE' && '✅'}
+              {order.status === "WAITING" && "🕑"}
+              {order.status === "IN_PRODUCTION" && "👨‍🍳"}
+              {order.status === "DONE" && "✅"}
             </span>
 
-
             <strong>
-              {order.status === 'WAITING' && 'Fila de espera'}
-              {order.status === 'IN_PRODUCTION' && 'Em preparação'}
-              {order.status === 'DONE' && 'Pronto'}
+              {order.status === "WAITING" && "Fila de espera"}
+              {order.status === "IN_PRODUCTION" && "Em preparação"}
+              {order.status === "DONE" && "Pronto"}
             </strong>
           </div>
         </div>
@@ -66,7 +75,12 @@ export function OrderModal({ visible, order, onClose }: OrderModalProps) {
           <div className="order-items">
             {order.products.map(({ _id, product, quantity }) => (
               <div className="item" key={_id}>
-                <img src={`http://localhost:3001/uploads/${product.imagePath}`} alt={product.name} width="56" height="28.51"/>
+                <img
+                  src={`http://localhost:3001/uploads/${product.imagePath}`}
+                  alt={product.name}
+                  width="56"
+                  height="28.51"
+                />
                 <span className="quantity">{quantity}x</span>
 
                 <div className="product-details">
@@ -84,15 +98,24 @@ export function OrderModal({ visible, order, onClose }: OrderModalProps) {
         </OrderDetails>
 
         <Actions>
-          <button type="button" className="primary">
-            <span>👨‍🍳</span>
-            <strong>Iniciar Produção</strong>
-          </button>
-
-          <button type="button" className="secondary">
+          {order.status !== "DONE" && (
+            <button onClick={onChangeOrderStatus} disabled={isLoading} type="button" className="primary">
+              <span>{order.status === "WAITING" && "👨‍🍳"}</span>
+              <span>{order.status === "IN_PRODUCTION" && "✅"}</span>
+              <strong>{order.status === "WAITING" && "Iniciar Produção"}</strong>
+              <strong>{order.status === "IN_PRODUCTION" && "Concluir Pedido"}</strong>
+            </button>
+          )}
+          <button
+            onClick={onCancelOrder}
+            type="button"
+            className="secondary"
+            disabled={isLoading}
+          >
             <strong>Cancelar Pedido</strong>
           </button>
         </Actions>
       </ModalBody>
     </Overlay>
-  )}
+  );
+}
